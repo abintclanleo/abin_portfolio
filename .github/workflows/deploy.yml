@@ -1,0 +1,30 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - name: Enable Web
+        run: flutter config --enable-web
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build Web
+        # Important: base-href must match the repository name for GitHub Pages project sites
+        # We use a script to dynamically set it to the repo name
+        run: flutter build web --base-href "/$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')/" --release
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
